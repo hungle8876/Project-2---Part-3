@@ -1,20 +1,30 @@
 # Khanh Nguyen
 # Van Hung Le
 # Phu Truong
+# CSE-3330 Project 2
+# December 5th, 2023
 
 
 from tkinter import *
 import sqlite3
+from PIL import ImageTk
 
 root = Tk()
 root.title('Library Management System')
-root.geometry("400x400")
+root.geometry("500x600")
+root.configure(bg="#a8ceff")
+root.pack_propagate(False)
+
 
 library_system_connect = sqlite3.connect('lms.db')
 library_system_cyr = library_system_connect.cursor()
 
-title = Label(root, text='Library Management System', font=20)
-title.grid(row=0, column=0, columnspan=2, pady=10, padx=100)
+system_logo = ImageTk.PhotoImage(file="lms_logo.png")
+logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
+logo_widget.image = system_logo
+logo_widget.pack()
+logo_widget.grid(row=0, column=0, columnspan=2)
+
 
 #1  Check out new book loan
 check_out_btn = Button(root, text='Check Out', width=20)
