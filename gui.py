@@ -9,7 +9,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 import sqlite3
-from PIL import ImageTk
+#from PIL import ImageTk
 
 
 # Define function for all button
@@ -42,11 +42,11 @@ def check_out():
 
     date_out_label = Label(query_frame, text='Date out')
     date_out_label.grid(row=3, column=0, padx=1, pady=10)
-
-    year_lbl = Label(query_frame, text='Year')
-    year_lbl.grid(row=3, column=1, padx=1, pady=10)
     year = Entry(query_frame, width=4)
     year.grid(row=3, column=2, padx=1, pady=10)
+    year_lbl = Label(query_frame, text='Year')
+    year_lbl.grid(row=3, column=1, padx=1, pady=10)
+    
 
     month_lbl = Label(query_frame, text='Month')
     month_lbl.grid(row=3, column=3, padx=1, pady=10)
