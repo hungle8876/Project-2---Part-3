@@ -6,6 +6,7 @@
 
 
 from tkinter import *
+from tkinter import messagebox
 from tkinter import ttk
 import sqlite3
 from PIL import ImageTk
@@ -75,14 +76,129 @@ def checkout_result(frame, book, branch, card, year, month, day):
     db_conn.commit()
     db_conn.close()
 
-def new_borrower():
-    return 0
+def new_borrower_gui():
+    window = Toplevel(root)
+    window.title("New Borrower")
 
-def new_book():
-    return 0
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
 
-def book_search():
-    return 0
+    borrower_labels = ['Borrower Name:', 'Borrower Address:', 'Borrower Phone:']
+    borrower_entries = []
+    for idx, label in enumerate(borrower_labels):
+        Label(query_frame, text=label).grid(row=1 + idx, column=0, padx=5, pady=10, sticky=W)
+        entry = Entry(query_frame, width=30)
+        entry.grid(row=1 + idx, column=1, padx=5, pady=10, sticky=W)
+        borrower_entries.append(entry)
+
+    name_entry, address_entry, phone_entry = borrower_entries
+
+    # Button for adding a borrower
+    Button(query_frame, text='Add Borrower', width=20, command=lambda: new_borrower(name_entry.get(), address_entry.get(), phone_entry.get())).grid(row=5, column=0, columnspan=2, padx=5, pady=10)
+
+   
+def new_borrower(name, address, phone):
+    conn = sqlite3.connect('lms.db')
+    cur = conn.cursor()
+
+    cur.execute('''INSERT INTO Borrower (Name, Address, Phone) VALUES (?, ?, ?)''', 
+                (name, address, phone))
+
+    # Retrieve the last inserted card number
+    card_no = cur.lastrowid
+    
+
+    conn.commit()
+    conn.close()
+
+    # Display the card number
+    messagebox.showinfo("Card Number", f"New Card Number: {card_no}")
+
+
+def new_book_gui():
+    window = Toplevel(root)
+    window.title("New Borrower")
+
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
+
+
+    title = Entry(query_frame, width = 30)
+    title.grid(row = 1, column = 1, padx = 20)
+    book_publisher = Entry(query_frame, width = 30)
+    book_publisher.grid(row = 2, column = 1, padx = 20)
+    book_author = Entry(query_frame, width = 30)
+    book_author.grid(row = 3, column = 1, padx = 20)
+
+    
+    title_label = Label(query_frame, text = 'Title: ')
+    title_label.grid(row =1, column = 0)
+    book_publisher_label = Label(query_frame, text = 'Book Publisher: ')
+    book_publisher_label.grid(row =2, column = 0)
+    book_author_label = Label(query_frame, text = 'Book Author: ')
+    book_author_label.grid(row =3, column = 0)
+
+    submit_book_btn = Button(query_frame, text ='Add Book ', command =lambda: new_book(title.get(), book_publisher.get(), book_author.get()))
+    submit_book_btn.grid(row = 4, column =0, columnspan = 2, pady = 10, padx = 5, ipadx =100)
+
+def new_book(title, publisher, author):
+    conn = sqlite3.connect('lms.db')
+    cur = conn.cursor()
+
+    # Insert into Book
+    cur.execute('''INSERT INTO Book (Title, Publisher_name) VALUES (?, ?)''', 
+                (title, publisher))
+    book_id = cur.lastrowid
+
+    # Insert into Book_Authors
+    cur.execute('''INSERT INTO Book_Authors (Book_id, Author_name) VALUES (?, ?)''', 
+                (book_id, author))
+
+    # Insert into Book_Copies for all 5 branches
+    for branch_id in range(1, 6):
+        cur.execute('''INSERT INTO Book_Copies (Book_id, Branch_id, No_of_copies) VALUES (?, ?, ?)''', 
+                    (book_id, branch_id, 5))
+
+    conn.commit()
+    conn.close()
+
+
+def book_search_gui():
+    window = Toplevel(root)
+    window.title("New Borrower")
+
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
+
+    book_title= Entry(query_frame, width = 30)
+    book_title.grid(row = 1, column = 1, padx = 20)
+
+    book_title_label = Label(query_frame, text = 'Book Title: ')
+    book_title_label.grid(row =1, column = 0)
+
+    display_area = Text(query_frame, height=10, width=50)
+    display_area.grid(row=13, column=0, columnspan=2, padx=5, pady=10)
+
+    submit_book_title_btn = Button(query_frame, text ='Lookup Copies ', command = lambda: book_search(book_title.get(),display_area))
+    submit_book_title_btn.grid(row = 2, column =0, columnspan = 2, pady = 10, padx = 10, ipadx = 70)
+
+    
+
+def book_search(title, display_area):
+    conn = sqlite3.connect('lms.db')
+    cur = conn.cursor()
+
+    cur.execute('''SELECT Branch_id, COUNT(*) FROM Book_Loans JOIN Book ON Book_Loans.Book_id = Book.Book_id 
+                   WHERE Title = ? GROUP BY Branch_id''', (title,))
+
+    records = cur.fetchall()
+
+    # Display the records
+    display_area.delete('1.0', END)  # Clear existing text
+    for record in records:
+        display_area.insert(END, f"Branch ID: {record[0]}, Copies Loaned: {record[1]}\n")
+
+    conn.close()
 
 def late_list():
     return 0
@@ -103,6 +219,16 @@ root.pack_propagate(False)
 library_system_connect = sqlite3.connect('main.db')
 library_system_cyr = library_system_connect.cursor()
 
+"""library_system_connect = '''CREATE TRIGGER update_book_copies
+                            AFTER UPDATE ON book_loans
+                            FOR EACH ROW
+                            WHEN NEW.Book_id IS NOT NULL AND NEW.Branch_id IS NOT NULL
+                            BEGIN
+                                UPDATE book_copies
+                                SET No_of_copies = No_of_copies - 1
+                                WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
+                            END;'''"""
+
 system_logo = ImageTk.PhotoImage(file="lms_logo.png")
 logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
 logo_widget.image = system_logo
@@ -117,15 +243,15 @@ check_out_btn = Button(root, text='Check Out', command=check_out, width=20, fg='
 check_out_btn.grid(row=2, column=0, columnspan=2,pady=10, padx=100)
 
 #2  Add new member into Borrower
-new_borrower_btn = Button(root, text='New Member', command=new_borrower, width=20, fg='black')
+new_borrower_btn = Button(root, text='New Borrower', command=new_borrower_gui, width=20, fg='black')
 new_borrower_btn.grid(row=3, column=0, columnspan=2,pady=10, padx=100)
 
 #3  Add new book into all 5 branches, 5 copies each branch
-new_book_btn = Button(root, text='New Book', command=new_book, width=20, fg='black')
+new_book_btn = Button(root, text='New Book', command=new_book_gui, width=20, fg='black')
 new_book_btn.grid(row=4, column=0, columnspan=2,pady=10, padx=100)
 
 #4  List the copies that are being loaned by the book title
-book_search_btn = Button(root, text='Search Book', command=book_search, width=20, fg='black')
+book_search_btn = Button(root, text='Search Book', command=book_search_gui, width=20, fg='black')
 book_search_btn.grid(row=5, column=0, columnspan=2,pady=10, padx=100)
 
 #5  List late returned from book_loans by a given date

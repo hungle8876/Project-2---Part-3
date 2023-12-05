@@ -73,3 +73,14 @@ CREATE TABLE IF NOT EXISTS Book_authors (
 
 .mode column 
 .header on
+
+
+CREATE TRIGGER update_book_copies
+AFTER UPDATE ON book_loans
+FOR EACH ROW
+WHEN NEW.Book_id IS NOT NULL AND NEW.Branch_id IS NOT NULL
+BEGIN
+    UPDATE book_copies
+    SET No_of_copies = No_of_copies - 1
+    WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
+END;
