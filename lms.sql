@@ -73,8 +73,50 @@ CREATE TABLE IF NOT EXISTS Book_authors (
 
 .mode column 
 .header on
+---Query 1
+ALTER TABLE Book_Loans
+ADD COLUMN Late TINYINT DEFAULT 0;
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE Book_Loans
+SET Late = 1
+WHERE Returned_date > Due_date;	
+
+UPDATE Book_Loans
+SET Late = 0
+WHERE Returned_date <= Due_date OR Returned_date IS NULL;
+
+---Query 2
+ALTER TABLE Library_Branch
+ADD COLUMN LateFee DECIMAL(5,2);
+
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE Library_Branch
+SET LateFee = 2.00;
 
 
+---Query 3
+CREATE VIEW vBookLoanInfo AS
+SELECT bl.Card_no,
+       b.Name AS 'Borrower Name',
+       bl.Date_out,
+       bl.Due_date,
+       bl.Returned_date,
+       DATEDIFF(IFNULL(bl.Returned_date, CURDATE()), bl.Date_out) AS 'TotalDays',
+       bk.Title AS 'Book Title',
+       IFNULL(DATEDIFF(bl.Returned_date, bl.Due_date), 0) AS 'LateDays',
+       bl.Branch_id,
+       IF(bl.Late = 1, DATEDIFF(bl.Returned_date, bl.Due_date) * lb.LateFee, 0) AS 'LateFeeBalance'
+FROM Book_Loans bl
+JOIN Borrower b ON bl.Card_no = b.Card_no
+JOIN Book bk ON bl.Book_id = bk.Book_id
+JOIN Library_Branch lb ON bl.Branch_id = lb.Branch_Id;
+
+
+
+---Create Trigger for BOOK_COPIES
 CREATE TRIGGER update_book_copies
 AFTER UPDATE ON book_loans
 FOR EACH ROW
@@ -84,3 +126,4 @@ BEGIN
     SET No_of_copies = No_of_copies - 1
     WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
 END;
+
