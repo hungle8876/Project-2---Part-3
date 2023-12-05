@@ -6,13 +6,74 @@
 
 
 from tkinter import *
+from tkinter import ttk
 import sqlite3
 from PIL import ImageTk
 
+
 # Define function for all button
 def check_out():
-    db_conn = sqlite3.connect('main.db')
-    return 0
+    window = Toplevel(root)
+    window.title("Check out")
+
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
+    output_frame = Frame(window)
+    output_frame.grid(row=1, column=0)
+
+    book_id_label = Label(query_frame, text='Book_id')
+    book_id_label.grid(row=0, column=0, pady=10, padx=5)
+    book_id_input = Entry(query_frame, width=10)
+    book_id_input.grid(row=0, column=1, pady=10, padx=5)
+
+
+    vlist = ['1', '2', '3']
+    branch_id_label = Label(query_frame, text='Branch_id')
+    branch_id_label.grid(row=1, column=0, pady=10, padx=5)
+    branch_id_input = ttk.Combobox(query_frame, values=vlist, width=10)
+    branch_id_input.set('Pick a branch')
+    branch_id_input.grid(row=1, column=1, pady=10, padx=5)
+
+    card_no_label = Label(query_frame, text='Card_no')
+    card_no_label.grid(row=2, column=0, pady=10, padx=5)
+    card_no_input = Entry(query_frame, width=10)
+    card_no_input.grid(row=2, column=1, pady=10, padx=5)
+
+    date_out_label = Label(query_frame, text='Date out')
+    date_out_label.grid(row=3, column=0, padx=1, pady=10)
+
+    year_lbl = Label(query_frame, text='Year')
+    year_lbl.grid(row=3, column=1, padx=1, pady=10)
+    year = Entry(query_frame, width=4)
+    year.grid(row=3, column=2, padx=1, pady=10)
+
+    month_lbl = Label(query_frame, text='Month')
+    month_lbl.grid(row=3, column=3, padx=1, pady=10)
+    month = Entry(query_frame, width=2)
+    month.grid(row=3, column=4, padx=1, pady=10)
+
+    day_lbl = Label(query_frame, text='Day')
+    day_lbl.grid(row=3, column=5, padx=1, pady=10)
+    day = Entry(query_frame, width=2)
+    day.grid(row=3, column=6, padx=1, pady=10)
+
+    submit_btn = Button(query_frame, text='Submit', command=lambda: checkout_result(output_frame, book_id_input.get(),
+                         branch_id_input.get(), card_no_input.get(), year.get(), month.get(), day.get()))
+    submit_btn.grid(row=4, column=0, columnspan=2, padx=1, pady=10)
+    
+def checkout_result(frame, book, branch, card, year, month, day):
+    db_conn = sqlite3.connect('lms.db')
+    db_cur = db_conn.cursor()
+    date_out = year + '-' + month + '-' + day
+    monthdue= int(month) + 1
+    yeardue = int(year)
+    if (monthdue == 13):
+        yeardue += 1
+        monthdue = 1
+    due_date = "{}-{}-{}".format(str(yeardue), str(monthdue), day)
+    db_cur.execute("INSERT INTO BOOK_LOANS(Book_id, Branch_id, Card_no, Date_out, Due_date) VALUES(?,?,?,?,?)", (int(book), int(branch), int(card), date_out, due_date))
+    db_conn.commit()
+    db_conn.close()
 
 def new_borrower():
     return 0
