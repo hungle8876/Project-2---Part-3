@@ -1,30 +1,56 @@
-Query 1: Add a 'Late' column to the 'Book_Loan' table and update it based on the return date.
+1.	The appropriate SQL commands 
+	Query 1: Add a 'Late' column to the 'Book_Loan' table and update it based on the return date.
+	Add an extra column 'Late':
+ALTER TABLE Book_Loans
+ADD COLUMN Late TINYINT DEFAULT 0;
 
-ALTER TABLE Book_Loan ADD COLUMN Late TINYINT(1) DEFAULT 0;
-UPDATE Book_Loan SET Late = CASE WHEN Returned_date > Due_date THEN 1 ELSE 0 END;
+	Update the 'Late' column for late returns:
 
-Query 2: Add a 'LateFee' column to the 'Library_Branch' table and decide on a late fee per day for each branch.
+	Disable Safe Update Mode Temporarily:
+SET SQL_SAFE_UPDATES = 0;
 
-ALTER TABLE Library_Branch ADD COLUMN LateFee DECIMAL(4,2);
-UPDATE Library_Branch SET LateFee = [DECIDE_LATE_FEE_PER_DAY];
-(Replace [DECIDE_LATE_FEE_PER_DAY] with the actual fee amount you decide for each branch.)
+	UPDATE Book_Loans
+SET Late = 1
+WHERE Returned_date > Due_date;	
 
-Query 3: Create a view vBookLoanInfo to retrieve detailed book loan information.
+	Update the 'Late' column for on-time returns:
+UPDATE Book_Loans
+SET Late = 0
+WHERE Returned_date <= Due_date OR Returned_date IS NULL;
+
+	Re-enable safe updates afterwards with SET SQL_SAFE_UPDATES = 1;
+
+	Query 2: Add a 'LateFee' column to the 'Library_Branch' table and decide on a late fee per day for each branch.
+	Add an extra column 'LateFee':
+ALTER TABLE Library_Branch
+ADD COLUMN LateFee DECIMAL(5,2);
+
+	Update the 'LateFee' column:
+	Disable Safe Update Mode Temporarily:
+SET SQL_SAFE_UPDATES = 0;
+
+UPDATE Library_Branch
+SET LateFee = 2.00;
+	Re-enable safe updates afterwards with SET SQL_SAFE_UPDATES = 1;
+	Assuming a branch's daily late fee is $2.
+
+	Query 3: Create a view vBookLoanInfo to retrieve detailed book loan information.
 
 CREATE VIEW vBookLoanInfo AS
-SELECT 
-  bl.Card_no, 
-  b.Name AS 'Borrower Name', 
-  bl.Date_out, 
-  bl.Due_date, 
-  bl.Returned_date,
-  DATEDIFF(bl.Due_date, bl.Date_out) * 7 AS 'TotalDays', 
-  bk.Title AS 'Book Title', 
-  GREATEST(DATEDIFF(bl.Returned_date, bl.Due_date), 0) AS 'DaysReturnedLate', 
-  bl.Branch_id,
-  GREATEST(DATEDIFF(bl.Returned_date, bl.Due_date), 0) * lb.LateFee AS 'LateFeeBalance'
-FROM 
-  Book_Loan bl
+SELECT bl.Card_no,
+       b.Name AS 'Borrower Name',
+       bl.Date_out,
+       bl.Due_date,
+       bl.Returned_date,
+       DATEDIFF(IFNULL(bl.Returned_date, CURDATE()), bl.Date_out) AS 'TotalDays',
+       bk.Title AS 'Book Title',
+       IFNULL(DATEDIFF(bl.Returned_date, bl.Due_date), 0) AS 'LateDays',
+       bl.Branch_id,
+       IF(bl.Late = 1, DATEDIFF(bl.Returned_date, bl.Due_date) * lb.LateFee, 0) AS 'LateFeeBalance'
+FROM Book_Loans bl
 JOIN Borrower b ON bl.Card_no = b.Card_no
 JOIN Book bk ON bl.Book_id = bk.Book_id
-JOIN Library_Branch lb ON bl.Branch_id = lb.Branch_id;
+JOIN Library_Branch lb ON bl.Branch_id = lb.Branch_Id;
+
+	Selecting from the view:
+SELECT * FROM vBookLoanInfo;
