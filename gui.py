@@ -9,7 +9,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 import sqlite3
-#from PIL import ImageTk
+from PIL import ImageTk
 
 
 # Define function for all button
@@ -217,10 +217,13 @@ def late_list_gui():
     due_date_1_label = Label(query_frame, text = 'Due Date: ')
     due_date_1_label.grid(row =2, column = 0)
 
-    submit_book_title_btn = Button(query_frame, text ='Lookup Late Returns ', command = lambda: late_list(start_date_1.get(), due_date_1.get()))
+    display_area = Text(query_frame, height=10, width=50)
+    display_area.grid(row=13, column=0, columnspan=2, padx=5, pady=10)
+
+    submit_book_title_btn = Button(query_frame, text ='Lookup Late Returns ', command = lambda: late_list(display_area, start_date_1.get(), due_date_1.get()))
     submit_book_title_btn.grid(row = 3, column =0, columnspan = 2, pady = 10, padx = 5, ipadx = 70)
 
-def late_list(start, due):
+def late_list(display_area, start, due):
     conn = sqlite3.connect('lms.db')
     cur = conn.cursor()
 
@@ -264,11 +267,11 @@ library_system_cyr = library_system_connect.cursor()
                                 WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
                             END;'''"""
 
-#system_logo = ImageTk.PhotoImage(file="lms_logo.png")
-#logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
-#logo_widget.image = system_logo
-#logo_widget.pack()
-#logo_widget.grid(row=0, column=0, columnspan=2, pady=0)
+system_logo = ImageTk.PhotoImage(file="lms_logo.png")
+logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
+logo_widget.image = system_logo
+logo_widget.pack()
+logo_widget.grid(row=0, column=0, columnspan=2, pady=0)
 title = Label(root, text="Library Management System", font=10, bg="#a8ceff", fg='black')
 title.grid(row=1, column=0, columnspan=2, pady=10, padx=100)
 
