@@ -242,7 +242,51 @@ def late_list(display_area, start, due):
 
     conn.close()
 
+def user_view_gui():
+    window = Toplevel(root)
+    window.title("Borrower View")
 
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
+
+    card_no= Entry(query_frame, width = 30)
+    card_no.grid(row = 1, column = 1, padx = 5)
+    card_no_label = Label(query_frame, text = 'Card No: ')
+    card_no_label.grid(row =1, column = 0)
+
+    user_name= Entry(query_frame, width = 30)
+    user_name.grid(row = 2, column = 1, padx = 5)
+    user_name_label = Label(query_frame, text = 'Name: ')
+    user_name_label.grid(row =2, column = 0)
+    
+    display_area = Text(query_frame, height=10, width=50)
+    display_area.grid(row=13, column=0, columnspan=2, padx=5, pady=10)
+
+    submit_book_title_btn = Button(query_frame, text ='See User View ', command = lambda: create_user_view(display_area, card_no.get(), user_name.get()))
+    submit_book_title_btn.grid(row = 3, column =0, columnspan = 2, pady = 10, padx = 5, ipadx = 70)
+
+
+def create_user_view(display_area, card_no, user_name):
+    conn = sqlite3.connect('lms.db')
+    cur = conn.cursor()
+
+    cur.execute('''SELECT Borrower.Card_no, Borrower.name, SUM(JULIANDAY(Returned_date) - JULIANDAY(Due_date)) AS Late_Fee 
+                FROM Borrower 
+                JOIN Book_Loans ON Borrower.card_no = Book_Loans.card_no 
+                JOIN Book ON Book.Book_id = Book_Loans.Book_id 
+                WHERE Borrower.Card_no = COALESCE(?, Borrower.Card_no) OR Borrower.name LIKE COALESCE(?, Borrower.name, '%') 
+                GROUP BY Borrower.Card_no, Borrower.name''',
+                (card_no, user_name))
+
+    records = cur.fetchall()
+
+    display_area.delete('1.0', END)  # Clear existing text
+    for record in records:
+        display_area.insert(END, f"Card No: {record[0]}, Name: {record[1]}, Late Fee: {record[2]}\n")
+
+    conn.close()
+
+    
 
 
 
@@ -295,6 +339,10 @@ book_search_btn.grid(row=5, column=0, columnspan=2,pady=10, padx=100)
 #5  List late returned from book_loans by a given date
 late_list_btn = Button(root, text='Late List', command=late_list_gui, width=20, fg='black')
 late_list_btn.grid(row=6, column=0, columnspan=2,pady=10, padx=100)
+
+late_fee_btn = Button(root, text='User late fee', command=user_view_gui, width=20, fg='black')
+late_fee_btn.grid(row=7, column=0, columnspan=2,pady=10, padx=100)
+
 
 
 library_system_cyr.execute("DROP TRIGGER update_book_copies;")
