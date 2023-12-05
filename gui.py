@@ -9,7 +9,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
 import sqlite3
-from PIL import ImageTk
+#from PIL import ImageTk
 
 
 # Define function for all button
@@ -254,10 +254,10 @@ root.configure(bg="#a8ceff")
 root.pack_propagate(False)
 
 
-library_system_connect = sqlite3.connect('main.db')
+library_system_connect = sqlite3.connect('lms.db')
 library_system_cyr = library_system_connect.cursor()
 
-"""library_system_connect = '''CREATE TRIGGER update_book_copies
+library_system_cyr.execute('''CREATE TRIGGER update_book_copies
                             AFTER UPDATE ON book_loans
                             FOR EACH ROW
                             WHEN NEW.Book_id IS NOT NULL AND NEW.Branch_id IS NOT NULL
@@ -265,13 +265,13 @@ library_system_cyr = library_system_connect.cursor()
                                 UPDATE book_copies
                                 SET No_of_copies = No_of_copies - 1
                                 WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
-                            END;'''"""
+                            END;''')
 
-system_logo = ImageTk.PhotoImage(file="lms_logo.png")
+"""system_logo = ImageTk.PhotoImage(file="lms_logo.png")
 logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
 logo_widget.image = system_logo
 logo_widget.pack()
-logo_widget.grid(row=0, column=0, columnspan=2, pady=0)
+logo_widget.grid(row=0, column=0, columnspan=2, pady=0)"""
 title = Label(root, text="Library Management System", font=10, bg="#a8ceff", fg='black')
 title.grid(row=1, column=0, columnspan=2, pady=10, padx=100)
 
@@ -297,5 +297,5 @@ late_list_btn = Button(root, text='Late List', command=late_list_gui, width=20, 
 late_list_btn.grid(row=6, column=0, columnspan=2,pady=10, padx=100)
 
 
-
+library_system_cyr.execute("DROP TRIGGER update_book_copies;")
 root.mainloop()
