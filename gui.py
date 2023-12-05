@@ -200,9 +200,44 @@ def book_search(title, display_area):
 
     conn.close()
 
-def late_list():
-    return 0
+def late_list_gui():
+    window = Toplevel(root)
+    window.title("New Borrower")
 
+    query_frame = Frame(window)
+    query_frame.grid(row=0, column=0)
+
+    start_date_1= Entry(query_frame, width = 30)
+    start_date_1.grid(row = 1, column = 1, padx = 5)
+    start_date_1_label = Label(query_frame, text = 'Start Date: ')
+    start_date_1_label.grid(row =1, column = 0)
+
+    due_date_1= Entry(query_frame, width = 30)
+    due_date_1.grid(row = 2, column = 1, padx = 5)
+    due_date_1_label = Label(query_frame, text = 'Due Date: ')
+    due_date_1_label.grid(row =2, column = 0)
+
+    submit_book_title_btn = Button(query_frame, text ='Lookup Late Returns ', command = lambda: late_list(start_date_1.get(), due_date_1.get()))
+    submit_book_title_btn.grid(row = 3, column =0, columnspan = 2, pady = 10, padx = 5, ipadx = 70)
+
+def late_list(start, due):
+    conn = sqlite3.connect('lms.db')
+    cur = conn.cursor()
+
+    cur.execute('''SELECT Book_id, Branch_id, Card_no, Due_date, Returned_date, 
+                   JULIANDAY(Returned_date) - JULIANDAY(Due_date) AS Late_Days
+                   FROM Book_Loans
+                   WHERE Returned_date > Due_date AND Due_date BETWEEN ? AND ?''', 
+                (start, due))
+
+    records = cur.fetchall()
+
+    # Display the records
+    display_area.delete('1.0', END)  # Clear existing text
+    for record in records:
+        display_area.insert(END, f"Book ID: {record[0]}, Branch ID: {record[1]}, Card No: {record[2]}, Late by {record[5]} days\n")
+
+    conn.close()
 
 
 
@@ -229,11 +264,11 @@ library_system_cyr = library_system_connect.cursor()
                                 WHERE Book_copies.Book_id = NEW.Book_id AND Book_copies.Branch_id = NEW.Branch_id;
                             END;'''"""
 
-system_logo = ImageTk.PhotoImage(file="lms_logo.png")
-logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
-logo_widget.image = system_logo
-logo_widget.pack()
-logo_widget.grid(row=0, column=0, columnspan=2, pady=0)
+#system_logo = ImageTk.PhotoImage(file="lms_logo.png")
+#logo_widget = Label(root, image=system_logo, font=20, bg="#a8ceff")
+#logo_widget.image = system_logo
+#logo_widget.pack()
+#logo_widget.grid(row=0, column=0, columnspan=2, pady=0)
 title = Label(root, text="Library Management System", font=10, bg="#a8ceff", fg='black')
 title.grid(row=1, column=0, columnspan=2, pady=10, padx=100)
 
@@ -255,7 +290,7 @@ book_search_btn = Button(root, text='Search Book', command=book_search_gui, widt
 book_search_btn.grid(row=5, column=0, columnspan=2,pady=10, padx=100)
 
 #5  List late returned from book_loans by a given date
-late_list_btn = Button(root, text='Late List', command=late_list, width=20, fg='black')
+late_list_btn = Button(root, text='Late List', command=late_list_gui, width=20, fg='black')
 late_list_btn.grid(row=6, column=0, columnspan=2,pady=10, padx=100)
 
 
